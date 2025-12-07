@@ -492,15 +492,3 @@ jobs:
           name: docs
           path: AdderDocs/docs/output/html
 
-      - name: Run MSBuild
-        run: bash -lc |
-          msbuild MySolution.sln /t:Build /p:Configuration=Release
-        continue-on-error: true
-
-      - name: Upload msbuild log on failure
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: msbuild-log
-          path: path/to/msbuild.log
-
