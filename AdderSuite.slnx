@@ -5,7 +5,7 @@
   </Configurations>
   <Folder Name="/.github/" />
   <Folder Name="/.github/workflows/">
-    <File Path="ci.yml" />
+    <File Path=".github/workflows/ci.yml" />
   </Folder>
   <Project Path="AdderBenchmarks/AdderBenchmarks.vcxproj" Id="44cfb70e-a2c2-4a7c-a2c4-374a7bc55282" />
   <Project Path="AdderDocs/AdderDocs.vcxproj" />
