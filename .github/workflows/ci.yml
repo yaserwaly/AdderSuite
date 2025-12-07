@@ -1,0 +1,492 @@
+name: CI
+on:
+  push:
+    branches:
+      - master
+      - main
+  pull_request:
+    branches:
+      - master
+      - main
+
+jobs:
+  build-test:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        config:
+          - Debug
+          - Release
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v1
+
+      - name: Install CMake via Chocolatey
+        shell: pwsh
+        #run: 'powershell -NoProfile -Command "choco install cmake --version=3.27.8 -y; refreshenv"'
+        run: |
+          choco install cmake --version=3.27.8 -y
+          refreshenv
+
+      # - name: Create docs output dir (Windows)
+      #   shell: pwsh
+      #   run: 'powershell -NoProfile -Command "New-Item -ItemType Directory -Force -Path \"$env:GITHUB_WORKSPACE\\AdderDocs\\docs\\output\" | Out-Null"'
+
+      # - name: Ensure overview.md exists (Windows)
+      #   shell: pwsh
+      #   run: 'powershell -NoProfile -Command "if (-not (Test-Path \"$env:GITHUB_WORKSPACE\\AdderDocs\\docs\\overview.md\")) { Set-Content -Path \"$env:GITHUB_WORKSPACE\\AdderDocs\\docs\\overview.md\" -Value \"## AdderSuite Documentation`n`nOverview.\" -Encoding UTF8 }"'
+
+      # - name: Write Windows Doxyfile (for MSBuild)
+      #   shell: pwsh
+      #   run: 'powershell -NoProfile -Command "$p = Join-Path $env:GITHUB_WORKSPACE \"AdderDocs\\docs\\DoxyfileWindows\"; $lines = @( ''PROJECT_NAME = \"AdderSuite\"'', ''PROJECT_BRIEF = \"Layered C++ architecture with testing, benchmarking, logging, and CI/CD\"'', ''PROJECT_NUMBER = \"1.0\"'', ''OUTPUT_DIRECTORY = docs/output'', ''CREATE_SUBDIRS = NO'', ''INPUT = ../AdderLib/include ../AdderDocs/docs/overview.md ../README.md'', ''RECURSIVE = YES'', ''FILE_PATTERNS = *.h *.hpp *.hh *.c *.cpp *.md'', ''MARKDOWN_SUPPORT = YES'', ''USE_MDFILE_AS_MAINPAGE = ../AdderDocs/docs/overview.md'', ''GENERATE_HTML = YES'', ''HTML_OUTPUT = html'', ''GENERATE_LATEX = NO'', ''GENERATE_TREEVIEW = YES'', ''EXTRACT_ALL = YES'', ''EXTRACT_PRIVATE = YES'', ''EXTRACT_STATIC = YES'', ''EXTRACT_LOCAL_CLASSES = YES'', ''SOURCE_BROWSER = YES'', ''INLINE_SOURCES = NO'', ''QUIET = NO'', ''WARNINGS = YES'', ''WARN_IF_UNDOCUMENTED = YES'', ''WARN_FORMAT = \"$file:$line: $text\"'', ''AUTOLINK_SUPPORT = YES'', ''INPUT_ENCODING = UTF-8'', ''TAB_SIZE = 4'' ); Set-Content -Path $p -Value $lines -Encoding UTF8"'
+
+      # - name: Build and stage GoogleTest (x64 Release)
+      #   shell: pwsh
+      #   run: |
+      #     $wd = $env:GITHUB_WORKSPACE
+      #     git clone https://github.com/google/googletest.git "$wd\googletest"
+      #     cmake -S "$wd\googletest" -B "$wd\googletest\build" -A x64 -DCMAKE_BUILD_TYPE=Release
+      #     cmake --build "$wd\googletest\build" --config Release
+
+      #     # Ensure expected include/lib layout
+      #     New-Item -ItemType Directory -Force -Path "C:\googletest\googletest\include" | Out-Null
+      #     New-Item -ItemType Directory -Force -Path "C:\googletest\googlemock\include" | Out-Null
+      #     New-Item -ItemType Directory -Force -Path "C:\googletest\out\build\x64-Release\lib" | Out-Null
+
+      #     # Copy headers
+      #     Copy-Item -Recurse -Force "$wd\googletest\googletest\include\*" "C:\googletest\googletest\include" -ErrorAction SilentlyContinue
+      #     Copy-Item -Recurse -Force "$wd\googletest\googlemock\include\*" "C:\googletest\googlemock\include" -ErrorAction SilentlyContinue
+
+      #     # Copy built libs (search recursively)
+      #     Get-ChildItem -Path "$wd\googletest\build" -Recurse -Filter *.lib -ErrorAction SilentlyContinue |
+      #       ForEach-Object { Copy-Item -Force $_.FullName "C:\googletest\out\build\x64-Release\lib\" -ErrorAction SilentlyContinue }
+
+      # - name: Build and stage Google Benchmark (x64 Release)
+      #   shell: pwsh
+      #   run: |
+      #     $wd = $env:GITHUB_WORKSPACE
+      #     git clone https://github.com/google/benchmark.git "$wd\benchmark"
+      #     cmake -S "$wd\benchmark" -B "$wd\benchmark\build" -A x64 -DCMAKE_BUILD_TYPE=Release -DBENCHMARK_DOWNLOAD_DEPENDENCIES=ON -DBENCHMARK_ENABLE_TESTING=OFF
+      #     cmake --build "$wd\benchmark\build" --config Release
+
+      #     # Ensure expected include/lib layout
+      #     New-Item -ItemType Directory -Force -Path "C:\benchmark\include" | Out-Null
+      #     New-Item -ItemType Directory -Force -Path "C:\benchmark\out\build\x64-Release\src" | Out-Null
+
+      #     # Copy headers
+      #     Copy-Item -Recurse -Force "$wd\benchmark\include\*" "C:\benchmark\include" -ErrorAction SilentlyContinue
+
+      #     # Copy built libs (search recursively)
+      #     Get-ChildItem -Path "$wd\benchmark\build" -Recurse -Filter *.lib -ErrorAction SilentlyContinue |
+      #       ForEach-Object { Copy-Item -Force $_.FullName "C:\benchmark\out\build\x64-Release\src\" -ErrorAction SilentlyContinue }
+
+      # - name: Install Ninja
+      #   shell: pwsh
+      #   run: choco install ninja -y
+
+
+      - name: Clone GoogleTest
+        shell: pwsh
+        #run: 'powershell -NoProfile -Command "git clone https://github.com/google/googletest.git \"$env:GITHUB_WORKSPACE\\googletest\""' 
+        #run: git clone https://github.com/google/googletest.git "$env:GITHUB_WORKSPACE\googletest"
+        run: |
+          $wd = $env:GITHUB_WORKSPACE
+          $dst = Join-Path $wd "googletest"
+          if (Test-Path $dst) { Remove-Item -LiteralPath $dst -Recurse -Force }
+          git clone https://github.com/google/googletest.git $dst
+          if ($LASTEXITCODE -ne 0) { Write-Error "git clone googletest failed"; exit $LASTEXITCODE }
+
+      - name: Configure GoogleTest (x64 ${{ matrix.config }}) #Configure GoogleTest (CMake)
+        shell: pwsh
+        #run: 'powershell -NoProfile -Command "cmake -S \"$env:GITHUB_WORKSPACE\\googletest\" -B \"$env:GITHUB_WORKSPACE\\googletest\\build\" -A x64 -DCMAKE_BUILD_TYPE=${{ matrix.config }} -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDLL"'
+        #run: cmake -S "$env:GITHUB_WORKSPACE\googletest" -B "$env:GITHUB_WORKSPACE\googletest\build" -A x64 -DCMAKE_BUILD_TYPE=${{ matrix.config }} -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDLL
+        run: |
+          $wd = $env:GITHUB_WORKSPACE
+          $cfg = "${{ matrix.config }}"
+          $src = Join-Path $wd "googletest"
+          $build = Join-Path $src "out\\build\\x64-$cfg"
+
+          # Clean previous build dir
+          if (Test-Path $build) { Remove-Item -LiteralPath $build -Recurse -Force }
+
+          $runtime = if ($cfg -eq "Debug") { "MultiThreadedDebugDLL" } else { "MultiThreadedDLL" }
+
+          # Force MSVC generator so we produce .lib compatible with MSBuild
+          cmake -G "Visual Studio 17 2022" -A x64 -S "$src" -B "$build" -DCMAKE_BUILD_TYPE="$cfg" -DCMAKE_MSVC_RUNTIME_LIBRARY="$runtime" -DBUILD_GMOCK=ON -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX="C:/googletest/out/build/x64-$cfg"
+          if ($LASTEXITCODE -ne 0) { Write-Error "CMake configure googletest failed"; exit $LASTEXITCODE }
+
+          # Diagnostic: print small snippets safely
+          $rulesPath = Join-Path $build "CMakeFiles\rules.ninja"
+          if (Test-Path $rulesPath) { Write-Host "---- rules.ninja snippet ----"; Get-Content $rulesPath -TotalCount 40 | Out-Host }
+          $cachePath = Join-Path $build "CMakeCache.txt"
+          if (Test-Path $cachePath) { Write-Host "---- CMakeCache entries ----"; Select-String -Path $cachePath -Pattern "CMAKE_BUILD_TYPE|CMAKE_MSVC_RUNTIME_LIBRARY" | Out-Host }
+
+        
+      - name: Build GoogleTest (x64 ${{ matrix.config }}) #Build GoogleTest
+        shell: pwsh
+        #run: 'powershell -NoProfile -Command "cmake --build \"$env:GITHUB_WORKSPACE\\googletest\\build\" --config ${{ matrix.config }}"'
+        #run: cmake --build "$env:GITHUB_WORKSPACE\googletest\build" --config ${{ matrix.config }}
+        run: |
+          $wd = $env:GITHUB_WORKSPACE
+          $cfg = "${{ matrix.config }}"
+          $src = Join-Path $wd "googletest"
+          $build = Join-Path $src "out\\build\\x64-$cfg"
+
+          cmake --build "$build" --config "$cfg"
+          if ($LASTEXITCODE -ne 0) { Write-Error "Build googletest failed"; exit $LASTEXITCODE }
+
+          # Install (preferred) so CMake places libs/headers in install prefix
+          cmake --install "$build" --config "$cfg"
+          if ($LASTEXITCODE -ne 0) { Write-Host "cmake --install failed, falling back to manual copy" }
+
+          # Fallback: copy any .lib produced into the staging folder expected by the solution
+          $stageLibDir  = "C:\googletest\out\build\x64-$cfg\lib"
+          $stageInclude1 = "C:\googletest\googletest\include"
+          $stageInclude2 = "C:\googletest\googlemock\include"
+          if (Test-Path $stageLibDir) { Remove-Item -LiteralPath $stageLibDir -Recurse -Force }
+          New-Item -ItemType Directory -Force -Path $stageLibDir | Out-Null
+          New-Item -ItemType Directory -Force -Path $stageInclude1 | Out-Null
+          New-Item -ItemType Directory -Force -Path $stageInclude2 | Out-Null
+
+          Copy-Item -Recurse -Force "$src\googletest\include\*" $stageInclude1 -ErrorAction SilentlyContinue
+          Copy-Item -Recurse -Force "$src\googlemock\include\*" $stageInclude2 -ErrorAction SilentlyContinue
+
+          Get-ChildItem -Path $build -Recurse -Filter *.lib -ErrorAction SilentlyContinue |
+            ForEach-Object { Copy-Item -Force $_.FullName $stageLibDir -ErrorAction SilentlyContinue }
+
+          Write-Host "Staged googletest libs:"
+          Get-ChildItem -Path $stageLibDir -Filter *.lib -ErrorAction SilentlyContinue | Out-Host
+        
+      - name: Clone Google Benchmark
+        shell: pwsh
+        #run: 'powershell -NoProfile -Command "git clone https://github.com/google/benchmark.git \"$env:GITHUB_WORKSPACE\\benchmark\""' 
+        #run: git clone https://github.com/google/benchmark.git "$env:GITHUB_WORKSPACE\benchmark"
+        run: |
+          $wd = $env:GITHUB_WORKSPACE
+          $dst = Join-Path $wd "benchmark"
+          if (Test-Path $dst) { Remove-Item -LiteralPath $dst -Recurse -Force }
+          git clone https://github.com/google/benchmark.git $dst
+          if ($LASTEXITCODE -ne 0) { Write-Error "git clone benchmark failed"; exit $LASTEXITCODE }
+
+      # - name: Configure and Build Google Benchmark (x64 ${{ matrix.config }})
+      #   shell: pwsh
+      #   run: |
+      #     $wd = $env:GITHUB_WORKSPACE
+      #     $cfg = "${{ matrix.config }}"
+      #     $src = Join-Path $wd "benchmark"
+      #     $build = Join-Path $src "build"
+
+      #     cmake -S $src -B $build -A x64 -DCMAKE_BUILD_TYPE=$cfg -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDLL -DBENCHMARK_DOWNLOAD_DEPENDENCIES=ON -DBENCHMARK_ENABLE_TESTING=OFF
+      #     if ($LASTEXITCODE -ne 0) { Write-Error "CMake configure benchmark failed"; exit $LASTEXITCODE }
+
+      #     cmake --build $build --config $cfg
+      #     if ($LASTEXITCODE -ne 0) { Write-Error "Build benchmark failed"; exit $LASTEXITCODE }
+
+      #     # staging layout on C:
+      #     $stageInclude = "C:\benchmark\include"
+      #     $stageLibDir  = "C:\benchmark\out\build\x64-$cfg\src"
+
+      #     New-Item -ItemType Directory -Force -Path $stageInclude | Out-Null
+      #     New-Item -ItemType Directory -Force -Path $stageLibDir | Out-Null
+
+      #     Copy-Item -Recurse -Force "$src\include\*" $stageInclude -ErrorAction SilentlyContinue
+
+      #     Get-ChildItem -Path $build -Recurse -Filter *.lib -ErrorAction SilentlyContinue |
+      #       ForEach-Object { Copy-Item -Force $_.FullName $stageLibDir -ErrorAction SilentlyContinue }
+
+      - name: Configure Google Benchmark (x64 ${{ matrix.config }}) #Configure Google Benchmark (CMake)
+        shell: pwsh
+        #run: 'powershell -NoProfile -Command "cmake -S \"$env:GITHUB_WORKSPACE\\benchmark\" -B \"$env:GITHUB_WORKSPACE\\benchmark\\build\" -A x64 -DCMAKE_BUILD_TYPE=${{ matrix.config }} -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDLL -DBENCHMARK_DOWNLOAD_DEPENDENCIES=ON -DBENCHMARK_ENABLE_TESTING=OFF"'
+        #run: cmake -S "$env:GITHUB_WORKSPACE\benchmark" -B "$env:GITHUB_WORKSPACE\benchmark\build" -A x64 -DCMAKE_BUILD_TYPE=${{ matrix.config }} -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDLL -DBENCHMARK_DOWNLOAD_DEPENDENCIES=ON -DBENCHMARK_ENABLE_TESTING=OFF
+        run: |
+          $wd = $env:GITHUB_WORKSPACE
+          $cfg = "${{ matrix.config }}"
+          $src = Join-Path $wd "benchmark"
+          $build = Join-Path $src "out\\build\\x64-$cfg"
+
+          if (Test-Path $build) { Remove-Item -LiteralPath $build -Recurse -Force }
+
+          $runtime = if ($cfg -eq "Debug") { "MultiThreadedDebugDLL" } else { "MultiThreadedDLL" }
+
+          cmake -G "Visual Studio 17 2022" -A x64 -S "$src" -B "$build" -DCMAKE_BUILD_TYPE="$cfg" -DCMAKE_MSVC_RUNTIME_LIBRARY="$runtime" -DBENCHMARK_DOWNLOAD_DEPENDENCIES=ON -DBENCHMARK_ENABLE_TESTING=OFF -DBENCHMARK_ENABLE_GTEST_TESTS=OFF -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX="C:/benchmark/out/build/x64-$cfg"
+          if ($LASTEXITCODE -ne 0) { Write-Error "CMake configure benchmark failed"; exit $LASTEXITCODE }
+
+          $rulesPath = Join-Path $build "CMakeFiles\rules.ninja"
+          if (Test-Path $rulesPath) { Write-Host "---- benchmark rules.ninja snippet ----"; Get-Content $rulesPath -TotalCount 40 | Out-Host }
+          $cachePath = Join-Path $build "CMakeCache.txt"
+          if (Test-Path $cachePath) { Write-Host "---- benchmark CMakeCache entries ----"; Select-String -Path $cachePath -Pattern "CMAKE_BUILD_TYPE|CMAKE_MSVC_RUNTIME_LIBRARY" | Out-Host }
+
+          $rulesPath = Join-Path $build "CMakeFiles\rules.ninja"
+          if (Test-Path $rulesPath) { Write-Host "---- benchmark rules.ninja snippet ----"; Get-Content $rulesPath -TotalCount 40 | Out-Host }
+          $cachePath = Join-Path $build "CMakeCache.txt"
+          if (Test-Path $cachePath) { Write-Host "---- benchmark CMakeCache entries ----"; Select-String -Path $cachePath -Pattern "CMAKE_BUILD_TYPE|CMAKE_MSVC_RUNTIME_LIBRARY" | Out-Host }
+
+      - name: Build Google Benchmark (x64 ${{ matrix.config }}) #Build Google Benchmark
+        shell: pwsh
+        #run: 'powershell -NoProfile -Command "cmake --build \"$env:GITHUB_WORKSPACE\\benchmark\\build\" --config ${{ matrix.config }}"'
+        #run: cmake --build "$env:GITHUB_WORKSPACE\benchmark\build" --config ${{ matrix.config }}
+        run: |
+          $wd = $env:GITHUB_WORKSPACE
+          $cfg = "${{ matrix.config }}"
+          $src = Join-Path $wd "benchmark"
+          $build = Join-Path $src "out\\build\\x64-$cfg"
+
+          cmake --build "$build" --config "$cfg"
+          if ($LASTEXITCODE -ne 0) { Write-Error "Build benchmark failed"; exit $LASTEXITCODE }
+
+          # Install to the prefix so libs are placed in a predictable location
+          cmake --install "$build" --config "$cfg"
+          if ($LASTEXITCODE -ne 0) { Write-Host "cmake --install failed, falling back to manual copy" }
+
+          $stageInclude = "C:\benchmark\include"
+          $stageLibDir  = "C:\benchmark\out\build\x64-$cfg\src"
+          if (Test-Path $stageLibDir) { Remove-Item -LiteralPath $stageLibDir -Recurse -Force }
+          New-Item -ItemType Directory -Force -Path $stageInclude | Out-Null
+          New-Item -ItemType Directory -Force -Path $stageLibDir | Out-Null
+
+          Copy-Item -Recurse -Force "$src\include\*" $stageInclude -ErrorAction SilentlyContinue
+
+          Get-ChildItem -Path $build -Recurse -Filter *.lib -ErrorAction SilentlyContinue |
+            ForEach-Object { Copy-Item -Force $_.FullName $stageLibDir -ErrorAction SilentlyContinue }
+
+          Write-Host "Staged benchmark libs:"
+          Get-ChildItem -Path $stageLibDir -Filter *.lib -ErrorAction SilentlyContinue | Out-Host
+
+      - name: Verify staged libs
+        shell: pwsh
+        run: |
+          Write-Host "C:\googletest libs:"; Get-ChildItem -Path "C:\googletest\out\build" -Recurse -Filter *.lib -ErrorAction SilentlyContinue
+          Write-Host "C:\benchmark libs:"; Get-ChildItem -Path "C:\benchmark\out\build" -Recurse -Filter *.lib -ErrorAction SilentlyContinue
+
+      - name: Retarget PlatformToolset v145 -> v143 (temporary for GitHub-hosted)
+        shell: pwsh
+        #run: 'powershell -NoProfile -Command "Get-ChildItem -Path $env:GITHUB_WORKSPACE -Recurse -Filter *.vcxproj | ForEach-Object { (Get-Content $_.FullName) -replace ''<PlatformToolset>v145</PlatformToolset>'',''<PlatformToolset>v143</PlatformToolset>'' | Set-Content $_.FullName -Encoding UTF8 } ; Get-ChildItem -Path $env:GITHUB_WORKSPACE -Recurse -Filter *.sln | ForEach-Object { (Get-Content $_.FullName) -replace ''PlatformToolset=v145'',''PlatformToolset=v143'' | Set-Content $_.FullName -Encoding UTF8 }"'          
+        #run: 'powershell -NoProfile -Command "Get-ChildItem -Path $env:GITHUB_WORKSPACE -Recurse -Filter *.vcxproj | ForEach-Object { $p = $_.FullName; (Get-Content -Raw $p) -replace ''<PlatformToolset>v145</PlatformToolset>'',''<PlatformToolset>v143</PlatformToolset>'' | Set-Content -LiteralPath $p -Encoding UTF8 } ; Get-ChildItem -Path $env:GITHUB_WORKSPACE -Recurse -Filter *.sln | ForEach-Object { $p = $_.FullName; (Get-Content -Raw $p) -replace ''PlatformToolset=v145'',''PlatformToolset=v143'' | Set-Content -LiteralPath $p -Encoding UTF8 }"'
+        #run: 'powershell -NoProfile -Command "Get-ChildItem -Path $env:GITHUB_WORKSPACE -Recurse -Filter *.vcxproj | ForEach-Object { $p = $_.FullName; (Get-Content -Raw -LiteralPath $p) -replace ''<PlatformToolset>v145</PlatformToolset>'',''<PlatformToolset>v143</PlatformToolset>'' | Set-Content -LiteralPath $p -Encoding UTF8 } ; Get-ChildItem -Path $env:GITHUB_WORKSPACE -Recurse -Filter *.sln | ForEach-Object { $p = $_.FullName; (Get-Content -Raw -LiteralPath $p) -replace ''PlatformToolset=v145'',''PlatformToolset=v143'' | Set-Content -LiteralPath $p -Encoding UTF8 }"'
+        run: |
+          Get-ChildItem -Path $env:GITHUB_WORKSPACE -Recurse -Filter *.vcxproj | ForEach-Object {
+            $p = $_.FullName
+            (Get-Content -Raw -LiteralPath $p) -replace '<PlatformToolset>v145</PlatformToolset>','<PlatformToolset>v143</PlatformToolset>' |
+              Set-Content -LiteralPath $p -Encoding UTF8
+          }
+
+          Get-ChildItem -Path $env:GITHUB_WORKSPACE -Recurse -Filter *.sln | ForEach-Object {
+            $p = $_.FullName
+            (Get-Content -Raw -LiteralPath $p) -replace 'PlatformToolset=v145','PlatformToolset=v143' |
+              Set-Content -LiteralPath $p -Encoding UTF8
+          }
+
+      - name: Verify no v145 remains
+        shell: pwsh
+        run: 'Get-ChildItem -Path $env:GITHUB_WORKSPACE -Recurse -Include *.vcxproj,*.sln | Select-String -Pattern "v145" | ForEach-Object { Write-Host "FOUND: $($_.Path):$($_.Line)" }'
+
+      # - name: Retarget all v145 -> v143 in workspace (robust) 
+      #   shell: pwsh
+      #   run: |
+      #     Write-Host "=== Find occurrences of v145 BEFORE retarget ==="
+      #     $exts = @('*.vcxproj','*.sln','*.props','*.targets','*.vcxproj.user','*.filters')
+      #     $foundBefore = Get-ChildItem -Path $env:GITHUB_WORKSPACE -Recurse -Include $exts -ErrorAction SilentlyContinue |
+      #       Select-String -Pattern 'v145' -SimpleMatch
+      #     if ($foundBefore) {
+      #       $foundBefore | ForEach-Object { Write-Host "$($_.Path):$($_.LineNumber): $($_.Line.Trim())" }
+      #     } else {
+      #       Write-Host "No v145 occurrences found before retarget."
+      #     }
+
+      #     Write-Host "=== Performing replacements ==="
+      #     # Read/Write with -Raw to preserve file content; replace all v145 -> v143
+      #     Get-ChildItem -Path $env:GITHUB_WORKSPACE -Recurse -Include $exts -ErrorAction SilentlyContinue |
+      #       ForEach-Object {
+      #         $path = $_.FullName
+      #         try {
+      #           $text = Get-Content -Raw -LiteralPath $path -ErrorAction Stop
+      #         } catch {
+      #           Write-Host "Skip (cannot read): $path"
+      #           return
+      #         }
+      #         if ($text -match 'v145') {
+      #           $new = $text -replace 'v145','v143'
+      #           # Save only if changed
+      #           if ($new -ne $text) {
+      #             Set-Content -LiteralPath $path -Value $new -Encoding UTF8
+      #             Write-Host "Retargeted: $path"
+      #           }
+      #         }
+      #       }
+
+      #     Write-Host "=== Find occurrences of v145 AFTER retarget ==="
+      #     $foundAfter = Get-ChildItem -Path $env:GITHUB_WORKSPACE -Recurse -Include $exts -ErrorAction SilentlyContinue |
+      #       Select-String -Pattern 'v145' -SimpleMatch
+      #     if ($foundAfter) {
+      #       $foundAfter | ForEach-Object { Write-Host "STILL FOUND: $($_.Path):$($_.LineNumber): $($_.Line.Trim())" }
+      #       Write-Host "ERROR: Some v145 occurrences remain. Failing the job so you can inspect logs."
+      #       exit 1
+      #     } else {
+      #       Write-Host "Success: no v145 occurrences remain."
+      #     }
+
+      #     - name: Diagnostic: list v145 occurrences AFTER retarget
+      #       shell: pwsh
+      #       run: |
+      #     $exts = @('*.vcxproj','*.sln','*.props','*.targets','*.vcxproj.user','*.filters')
+      #     Write-Host "Searching for v145 after retarget..."
+      #     $found = Get-ChildItem -Path $env:GITHUB_WORKSPACE -Recurse -Include $exts -ErrorAction SilentlyContinue |
+      #       Select-String -Pattern 'v145' -SimpleMatch
+      #     if ($found) {
+      #       $found | ForEach-Object { Write-Host "STILL FOUND: $($_.Path):$($_.LineNumber): $($_.Line.Trim())" }
+      #       Write-Host "Failing job so you can inspect remaining occurrences."
+      #       exit 1
+      #     } else {
+      #       Write-Host "No v145 occurrences remain."
+      #     }
+
+      # - name: Build solution with diagnostic msbuild (x64 ${{ matrix.config }})
+      #   shell: pwsh
+      #   run: |
+      #     $sln = Join-Path $env:GITHUB_WORKSPACE "AdderSuite.slnx"
+      #     if (-not (Test-Path $sln)) { $sln = Join-Path $env:GITHUB_WORKSPACE "AdderSuite.sln" }
+      #     if (-not (Test-Path $sln)) { Write-Error "Solution file not found."; exit 1 }
+      #     Write-Host "Running msbuild with /p:PlatformToolset=v143 and /v:diag -> msbuild.log"
+      #     msbuild $sln /p:Configuration=${{ matrix.config }} /p:Platform=x64 /p:PlatformToolset=v143 /m /v:diag > msbuild.log 2>&1
+      #     Write-Host "---- msbuild tail (last 200 lines) ----"
+      #     Get-Content msbuild.log -Tail 200 | ForEach-Object { Write-Host $_ }
+
+      # - name: Upload msbuild log
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: msbuild-log-${{ matrix.config }}
+      #     path: msbuild.log
+
+
+
+
+      # - name: Build solution (x64 Release)
+      #   shell: pwsh
+      #   run: |
+      #     $slnx = Join-Path $env:GITHUB_WORKSPACE "AdderSuite.slnx"
+      #     $sln  = Join-Path $env:GITHUB_WORKSPACE "AdderSuite.sln"
+      #     if (Test-Path $slnx) {
+      #       msbuild $slnx /p:Configuration=Release /m
+      #     } elseif (Test-Path $sln) {
+      #       msbuild $sln /p:Configuration=Release /m
+      #     } else {
+      #       Write-Error "Solution file not found: expected AdderSuite.slnx or AdderSuite.sln"
+      #       exit 1
+      #     }
+
+      - name: Build solution (x64 ${{ matrix.config }})
+        shell: pwsh
+        run: |
+          cd $env:GITHUB_WORKSPACE
+          $slnx = Join-Path $env:GITHUB_WORKSPACE "AdderSuite.slnx"
+          $sln  = Join-Path $env:GITHUB_WORKSPACE "AdderSuite.sln"
+          if (Test-Path $slnx) { $sln = $slnx }
+          elseif (Test-Path $sln) { $sln = $sln }
+          else { Write-Error "Solution file not found."; exit 1 }
+
+          Write-Host "Building solution: $sln"
+          Get-Command msbuild | Select-Object Path,Version | Write-Host
+
+          $log = Join-Path $env:GITHUB_WORKSPACE "msbuild_${{ matrix.config }}.log"
+
+          & msbuild $sln /p:Configuration="${{ matrix.config }}" /p:Platform=x64 /p:PlatformToolset=v143 /m /fl /flp:"logfile=$log;verbosity=normal"
+          $code = $LASTEXITCODE
+          if ($code -ne 0) {
+            Write-Host "MSBuild failed with exit code $code. Log: $log"
+            exit $code
+          }
+
+      - name: Upload msbuild log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: msbuild-log-${{ matrix.config }}
+          path: msbuild_${{ matrix.config }}.log
+
+      # - name: Run tests
+      #   shell: pwsh
+      #   run: 'powershell -NoProfile -Command "$exe = Join-Path $env:GITHUB_WORKSPACE \"x64\\${{ matrix.config }}\\AdderTests.exe\"; if (-not (Test-Path $exe)) { $exe = Join-Path $env:GITHUB_WORKSPACE \"x64\\Release\\AdderTests.exe\" }; if (Test-Path $exe) { & $exe } else { Write-Host \"Skip tests\" }"'
+
+      # - name: Run benchmarks
+      #   shell: pwsh
+      #   run: 'powershell -NoProfile -Command "$exe = Join-Path $env:GITHUB_WORKSPACE \"x64\\${{ matrix.config }}\\AdderBenchmarks.exe\"; if (-not (Test-Path $exe)) { $exe = Join-Path $env:GITHUB_WORKSPACE \"x64\\Release\\AdderBenchmarks.exe\" }; if (Test-Path $exe) { & $exe --benchmark_min_time=1s --benchmark_repetitions=5 } else { Write-Host \"Skip benchmarks\" }"'
+
+      - name: Run tests if present
+        shell: pwsh
+        run: |
+          $testExe = Join-Path $env:GITHUB_WORKSPACE "x64\${{ matrix.config }}\AdderTests.exe"
+          if (Test-Path $testExe) {
+            & $testExe
+          } else {
+            Write-Host "Tests executable not found, skipping tests."
+          }
+
+      - name: Run benchmarks if present
+        if: matrix.config == 'Release'
+        shell: pwsh
+        run: |
+          $benchExe = Join-Path $env:GITHUB_WORKSPACE "x64\${{ matrix.config }}\AdderBenchmarks.exe"
+          if (Test-Path $benchExe) {
+            & $benchExe --benchmark_min_time=1s --benchmark_repetitions=5
+          } else {
+            Write-Host "Benchmarks executable not found, skipping benchmarks."
+          }
+
+  docs:
+    runs-on: ubuntu-latest
+    needs: build-test
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # - name: Install Doxygen
+      #   run: sudo apt-get update && sudo apt-get install -y doxygen
+
+      # - name: Install Doxygen and graphviz
+      #   run: bash -lc |
+      #     sudo apt-get update
+      #     sudo apt-get install -y doxygen graphviz
+
+      - name: Install Doxygen and graphviz
+        run: bash -lc "sudo apt-get update && sudo apt-get install -y doxygen graphviz"
+
+
+      # - name: Prepare docs dirs
+      #   run: bash -lc |
+      #     mkdir -p AdderDocs/docs/output
+      #     if [ ! -f AdderDocs/docs/overview.md ]; then
+      #       printf "%s\n\n%s\n" "## AdderSuite Documentation" "Overview." > AdderDocs/docs/overview.md
+      #     fi
+
+      # - name: Ensure overview.md
+      #   run: 'bash -lc "printf \"%s\n\" \"## AdderSuite Documentation\" \"\" \"Overview.\" > AdderDocs/docs/overview.md"'
+
+      # - name: Write GitHub Doxyfile (CI)
+      #   run: 'bash -lc "echo \"PROJECT_NAME = \\\"AdderSuite\\\"\" > AdderDocs/docs/Doxyfile && echo \"PROJECT_BRIEF = \\\"Layered C++ architecture with testing, benchmarking, logging, and CI/CD\\\"\" >> AdderDocs/docs/Doxyfile && echo \"PROJECT_NUMBER = \\\"1.0\\\"\" >> AdderDocs/docs/Doxyfile && echo \"OUTPUT_DIRECTORY = output\" >> AdderDocs/docs/Doxyfile && echo \"CREATE_SUBDIRS = NO\" >> AdderDocs/docs/Doxyfile && echo \"INPUT = ../../AdderLib/include ../../README.md overview.md\" >> AdderDocs/docs/Doxyfile && echo \"RECURSIVE = YES\" >> AdderDocs/docs/Doxyfile && echo \"FILE_PATTERNS = *.h *.hpp *.hh *.c *.cpp *.md\" >> AdderDocs/docs/Doxyfile && echo \"MARKDOWN_SUPPORT = YES\" >> AdderDocs/docs/Doxyfile && echo \"USE_MDFILE_AS_MAINPAGE = overview.md\" >> AdderDocs/docs/Doxyfile && echo \"GENERATE_HTML = YES\" >> AdderDocs/docs/Doxyfile && echo \"HTML_OUTPUT = html\" >> AdderDocs/docs/Doxyfile && echo \"GENERATE_LATEX = NO\" >> AdderDocs/docs/Doxyfile && echo \"GENERATE_TREEVIEW = YES\" >> AdderDocs/docs/Doxyfile && echo \"EXTRACT_ALL = YES\" >> AdderDocs/docs/Doxyfile && echo \"EXTRACT_PRIVATE = YES\" >> AdderDocs/docs/Doxyfile && echo \"EXTRACT_STATIC = YES\" >> AdderDocs/docs/Doxyfile && echo \"EXTRACT_LOCAL_CLASSES = YES\" >> AdderDocs/docs/Doxyfile && echo \"SOURCE_BROWSER = YES\" >> AdderDocs/docs/Doxyfile && echo \"INLINE_SOURCES = NO\" >> AdderDocs/docs/Doxyfile && echo \"QUIET = NO\" >> AdderDocs/docs/Doxyfile && echo \"WARNINGS = YES\" >> AdderDocs/docs/Doxyfile && echo \"WARN_IF_UNDOCUMENTED = YES\" >> AdderDocs/docs/Doxyfile && echo \"WARN_FORMAT = \\\"$file:$line: $text\\\"\" >> AdderDocs/docs/Doxyfile && echo \"AUTOLINK_SUPPORT = YES\" >> AdderDocs/docs/Doxyfile && echo \"INPUT_ENCODING = UTF-8\" >> AdderDocs/docs/Doxyfile && echo \"TAB_SIZE = 4\" >> AdderDocs/docs/Doxyfile"'
+
+      #- name: Generate docs
+      #  run: doxygen AdderDocs/docs/Doxyfile
+
+      #- name: Generate docs
+      #  run: |
+      #    cd $GITHUB_WORKSPACE
+      #    doxygen AdderDocs/docs/Doxyfile
+
+      # - name: Generate docs
+      #   working-directory: AdderDocs/docs
+      #   run: bash -lc |
+      #     doxygen Doxyfile
+
+      - name: Generate docs
+        shell: bash
+        working-directory: AdderDocs
+        run: doxygen docs/Doxyfile
+
+      - name: Upload docs artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: docs
+          path: AdderDocs/docs/output/html
