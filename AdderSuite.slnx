@@ -1,0 +1,12 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Folder Name="/.github/" />
+  <Folder Name="/.github/workflows/" />
+  <Project Path="AdderBenchmarks/AdderBenchmarks.vcxproj" Id="44cfb70e-a2c2-4a7c-a2c4-374a7bc55282" />
+  <Project Path="AdderDocs/AdderDocs.vcxproj" />
+  <Project Path="AdderLib/AdderLib.vcxproj" Id="dccc9177-ef66-483b-94d0-c21fff84cfba" />
+  <Project Path="AdderTests/AdderTests.vcxproj" Id="5ab6304e-49d1-46f4-a15e-f48df58bc3dd" />
+</Solution>

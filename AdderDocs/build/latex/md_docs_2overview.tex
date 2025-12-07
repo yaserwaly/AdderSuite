@@ -1,0 +1,18 @@
+\chapter{overview }
+\hypertarget{md_docs_2overview}{}\label{md_docs_2overview}\index{overview@{overview}}
+\hypertarget{md_docs_2overview_autotoc_md0}{}\doxysection{\texorpdfstring{Adder\+Suite overview}{Adder\+Suite overview}}\label{md_docs_2overview_autotoc_md0}
+
+\begin{DoxyItemize}
+\item Purpose\+: Structured C++ project demonstrating layered design with testing, coverage, logging, and CI/\+CD.
+\item Layers\+:
+\begin{DoxyItemize}
+\item Interfaces\+: IAdder contract.
+\item Domain\+: Adder logic with overflow check.
+\item Factory\+: Dependency injection (Real/\+Stub).
+\item C-\/\+API\+: extern "{}\+C"{} facade.
+\item Logging/\+Error\+: Minimal cross-\/cutting concerns.
+\end{DoxyItemize}
+\item Tests\+: GTest + GMock for real, stub, mock, and C-\/\+API.
+\item Benchmarks\+: Google Benchmark target.
+\item Coverage\+: gcovr HTML report via CMake target {\ttfamily coverage}. 
+\end{DoxyItemize}

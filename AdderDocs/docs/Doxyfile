@@ -1,0 +1,64 @@
+# Doxyfile for AdderSuite documentation
+
+PROJECT_NAME           = "AdderSuite"
+PROJECT_BRIEF          = "Layered C++ architecture with testing, benchmarking, logging, and CI/CD"
+PROJECT_NUMBER         = "1.0"
+
+# IMPORTANT: paths here are relative to the location of this Doxyfile:
+# this file is at AdderDocs/docs/Doxyfile
+
+# Output directory relative to this Doxyfile (will become AdderDocs/docs/output)
+#OUTPUT_DIRECTORY       = output
+
+OUTPUT_DIRECTORY       = docs/output                      # مجلد الإخراج للتوثيق
+
+CREATE_SUBDIRS         = NO
+
+# INPUT paths relative to this Doxyfile:
+# - ../../AdderLib/include  -> points to AdderLib/include at repo root
+# - ../../README.md         -> points to README.md at repo root
+# - overview.md             -> points to AdderDocs/docs/overview.md
+#INPUT                  = ../../AdderLib/include ../../README.md overview.md
+
+INPUT                  = ../AdderLib/include ../AdderDocs/docs/overview.md ../README.md  # الملفات والمجلدات التي سيتم تحليلها
+
+RECURSIVE              = YES
+
+FILE_PATTERNS          = *.h *.hpp *.hh *.c *.cpp *.md
+MARKDOWN_SUPPORT       = YES
+#USE_MDFILE_AS_MAINPAGE = overview.md
+
+USE_MDFILE_AS_MAINPAGE = ../AdderDocs/docs/overview.md    # ملف Markdown المستخدم كصفحة رئيسية
+
+# Output formats
+GENERATE_HTML          = YES
+HTML_OUTPUT            = html
+GENERATE_LATEX         = NO
+GENERATE_TREEVIEW      = YES
+
+# Extraction options
+EXTRACT_ALL            = YES
+EXTRACT_PRIVATE        = YES
+EXTRACT_STATIC         = YES
+EXTRACT_LOCAL_CLASSES  = YES
+
+# Remove unsupported custom tags (they caused warnings)
+# GENERATE_CLASSES / GENERATE_FILES / GENERATE_NAMESPACES removed
+
+# Source browsing
+SOURCE_BROWSER         = YES
+INLINE_SOURCES         = NO
+
+# Warnings and verbosity
+QUIET                  = NO
+WARNINGS               = YES
+WARN_IF_UNDOCUMENTED   = YES
+WARN_FORMAT            = "$file:$line: $text"
+
+# Markdown and encoding
+AUTOLINK_SUPPORT       = YES
+INPUT_ENCODING         = UTF-8
+
+# Misc
+GENERATE_TIMESTAMP     = YES
+TAB_SIZE               = 4
