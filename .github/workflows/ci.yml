@@ -386,8 +386,10 @@ jobs:
           $projPath = Join-Path $slnDir "AdderLib\AdderLib.vcxproj"
           if (-not (Test-Path $projPath)) { Write-Error "AdderLib project not found: $projPath"; exit 1 }
 
-          msbuild $projPath /p:Configuration=$cfg /p:Platform=$platform /p:DefineConstants="ADDERLIB_EXPORTS;$(DefineConstants)" /m
+          # Use single quotes so PowerShell does not expand $(DefineConstants)
+          & msbuild $projPath /p:Configuration=$cfg /p:Platform=$platform /p:DefineConstants='ADDERLIB_EXPORTS;$(DefineConstants)' /m
           if ($LASTEXITCODE -ne 0) { Write-Error "Build AdderLib failed"; exit $LASTEXITCODE }
+
 
       - name: Copy AdderLib.dll to consumers
         shell: pwsh
