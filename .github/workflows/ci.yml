@@ -377,89 +377,89 @@ jobs:
       #       exit 1
       #     }
 
-      - name: Build AdderLib (project)
-        shell: pwsh
-        run: |
-          $cfg = "${{ matrix.config }}"
-          $platform = "x64"
-          $repo = $env:GITHUB_WORKSPACE
-          $projPath = Join-Path $repo "AdderLib\AdderLib.vcxproj"
+      # - name: Build AdderLib (project)
+      #   shell: pwsh
+      #   run: |
+      #     $cfg = "${{ matrix.config }}"
+      #     $platform = "x64"
+      #     $repo = $env:GITHUB_WORKSPACE
+      #     $projPath = Join-Path $repo "AdderLib\AdderLib.vcxproj"
 
-          if (-not (Test-Path $projPath)) {
-            Write-Error "AdderLib project not found: $projPath"
-            exit 1
-          }
+      #     if (-not (Test-Path $projPath)) {
+      #       Write-Error "AdderLib project not found: $projPath"
+      #       exit 1
+      #     }
 
-          # إذا كان ملف المشروع يحتوي على مسار include خاطئ، نمرّر مسار include الصحيح مؤقتًا
-          $includeDir = Join-Path $repo "AdderLib\include"
-          if (Test-Path $includeDir) {
-            & msbuild $projPath /p:Configuration=$cfg /p:Platform=$platform /p:AdditionalIncludeDirectories="$includeDir;%(AdditionalIncludeDirectories)" /m
-          } else {
-            # خلاف ذلك نبني المشروع بدون تعديل إضافي
-            & msbuild $projPath /p:Configuration=$cfg /p:Platform=$platform /m
-          }
+      #     # إذا كان ملف المشروع يحتوي على مسار include خاطئ، نمرّر مسار include الصحيح مؤقتًا
+      #     $includeDir = Join-Path $repo "AdderLib\include"
+      #     if (Test-Path $includeDir) {
+      #       & msbuild $projPath /p:Configuration=$cfg /p:Platform=$platform /p:AdditionalIncludeDirectories="$includeDir;%(AdditionalIncludeDirectories)" /m
+      #     } else {
+      #       # خلاف ذلك نبني المشروع بدون تعديل إضافي
+      #       & msbuild $projPath /p:Configuration=$cfg /p:Platform=$platform /m
+      #     }
 
-          if ($LASTEXITCODE -ne 0) {
-            Write-Error "Build AdderLib failed"
-            exit $LASTEXITCODE
-          }
-
-
-
-      - name: Copy AdderLib.dll to consumers
-        shell: pwsh
-        run: |
-          $cfg = "${{ matrix.config }}"
-          $repo = $env:GITHUB_WORKSPACE
-
-          # قائمة مسارات محتملة لإخراج الـ DLL (تغطّي اختلافات Release/Debug و x64 layout)
-          $candidates = @(
-            Join-Path $repo "AdderLib\x64\$cfg\AdderLib.dll",
-            Join-Path $repo "AdderLib\$cfg\x64\AdderLib.dll",
-            Join-Path $repo "AdderLib\bin\x64\$cfg\AdderLib.dll",
-            Join-Path $repo "AdderLib\$(Configuration)\x64\AdderLib.dll"
-          )
-
-          $dll = $null
-          foreach ($p in $candidates) {
-            if (Test-Path $p) { $dll = $p; break }
-          }
-
-          if (-not $dll) {
-            # محاولة بحث عام كاحتياط
-            $found = Get-ChildItem -Path $repo -Recurse -Filter "AdderLib.dll" -ErrorAction SilentlyContinue | Select-Object -First 1
-            if ($found) { $dll = $found.FullName }
-          }
-
-          if (-not $dll) {
-            Write-Error "AdderLib.dll not found in expected locations. Candidates:`n$($candidates -join "`n")"
-            exit 1
-          }
-
-          Write-Host "Found AdderLib.dll at: $dll"
-
-          $targets = @(
-            Join-Path $repo "AdderApp\x64\$cfg",
-            Join-Path $repo "AdderTests\x64\$cfg",
-            Join-Path $repo "AdderBenchmarks\x64\$cfg"
-          )
-
-          foreach ($t in $targets) {
-            if (-not (Test-Path $t)) { New-Item -ItemType Directory -Force -Path $t | Out-Null }
-            Copy-Item -Force $dll $t
-            Write-Host "Copied $dll -> $t"
-          }
+      #     if ($LASTEXITCODE -ne 0) {
+      #       Write-Error "Build AdderLib failed"
+      #       exit $LASTEXITCODE
+      #     }
 
 
 
-      - name: Upload AdderLib artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: AdderLib-${{ matrix.config }}-artifacts
-          path: |
-            AdderLib/x64/${{ matrix.config }}/**
-            AdderLib/${{ matrix.config }}/x64/**
-            AdderLib/**/${{ matrix.config }}/x64/**
+      # - name: Copy AdderLib.dll to consumers
+      #   shell: pwsh
+      #   run: |
+      #     $cfg = "${{ matrix.config }}"
+      #     $repo = $env:GITHUB_WORKSPACE
+
+      #     # قائمة مسارات محتملة لإخراج الـ DLL (تغطّي اختلافات Release/Debug و x64 layout)
+      #     $candidates = @(
+      #       Join-Path $repo "AdderLib\x64\$cfg\AdderLib.dll",
+      #       Join-Path $repo "AdderLib\$cfg\x64\AdderLib.dll",
+      #       Join-Path $repo "AdderLib\bin\x64\$cfg\AdderLib.dll",
+      #       Join-Path $repo "AdderLib\$(Configuration)\x64\AdderLib.dll"
+      #     )
+
+      #     $dll = $null
+      #     foreach ($p in $candidates) {
+      #       if (Test-Path $p) { $dll = $p; break }
+      #     }
+
+      #     if (-not $dll) {
+      #       # محاولة بحث عام كاحتياط
+      #       $found = Get-ChildItem -Path $repo -Recurse -Filter "AdderLib.dll" -ErrorAction SilentlyContinue | Select-Object -First 1
+      #       if ($found) { $dll = $found.FullName }
+      #     }
+
+      #     if (-not $dll) {
+      #       Write-Error "AdderLib.dll not found in expected locations. Candidates:`n$($candidates -join "`n")"
+      #       exit 1
+      #     }
+
+      #     Write-Host "Found AdderLib.dll at: $dll"
+
+      #     $targets = @(
+      #       Join-Path $repo "AdderApp\x64\$cfg",
+      #       Join-Path $repo "AdderTests\x64\$cfg",
+      #       Join-Path $repo "AdderBenchmarks\x64\$cfg"
+      #     )
+
+      #     foreach ($t in $targets) {
+      #       if (-not (Test-Path $t)) { New-Item -ItemType Directory -Force -Path $t | Out-Null }
+      #       Copy-Item -Force $dll $t
+      #       Write-Host "Copied $dll -> $t"
+      #     }
+
+
+
+      # - name: Upload AdderLib artifacts
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: AdderLib-${{ matrix.config }}-artifacts
+      #     path: |
+      #       AdderLib/x64/${{ matrix.config }}/**
+      #       AdderLib/${{ matrix.config }}/x64/**
+      #       AdderLib/**/${{ matrix.config }}/x64/**
 
 
 
