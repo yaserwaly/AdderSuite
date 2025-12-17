@@ -377,18 +377,16 @@ jobs:
       #       exit 1
       #     }
 
-      - name: Build AdderLib (export DLL)
+      - name: Build AdderLib (project)
         shell: pwsh
         run: |
           $cfg = "${{ matrix.config }}"
           $platform = "x64"
-          $slnDir = $env:GITHUB_WORKSPACE
-          $projPath = Join-Path $slnDir "AdderLib\AdderLib.vcxproj"
+          $projPath = Join-Path $env:GITHUB_WORKSPACE "AdderLib\AdderLib.vcxproj"
           if (-not (Test-Path $projPath)) { Write-Error "AdderLib project not found: $projPath"; exit 1 }
-
-          # Use single quotes so PowerShell does not expand $(DefineConstants)
-          & msbuild $projPath /p:Configuration=$cfg /p:Platform=$platform /p:DefineConstants='ADDERLIB_EXPORTS;$(DefineConstants)' /m
+          & msbuild $projPath /p:Configuration=$cfg /p:Platform=$platform /m
           if ($LASTEXITCODE -ne 0) { Write-Error "Build AdderLib failed"; exit $LASTEXITCODE }
+
 
 
       - name: Copy AdderLib.dll to consumers
@@ -397,25 +395,26 @@ jobs:
           $cfg = "${{ matrix.config }}"
           $platform = "x64"
           $sln = $env:GITHUB_WORKSPACE
-          # توقع المسار الافتراضي: AdderLib\x64\Release\AdderLib.dll أو AdderLib\x64\Debug\AdderLib.dll
-          $dllSrc = Join-Path $sln "AdderLib\$(if ($cfg -eq 'Debug') { 'x64\\Debug' } else { 'x64\\Release' })\AdderLib.dll"
-          if (-not (Test-Path $dllSrc)) {
-            # حاول مسار بديل: AdderLib\$(Configuration)\$(Platform)
-            $alt = Join-Path $sln "AdderLib\$cfg\x64\AdderLib.dll"
-            if (Test-Path $alt) { $dllSrc = $alt } else { Write-Host "DLL not found at $dllSrc or $alt"; exit 1 }
-          }
 
-          $consumers = @(
+          # عدّل المسارات أدناه لتطابق إخراج مشاريعك الفعلي
+          $dllPath = Join-Path $sln "AdderLib\x64\$cfg\AdderLib.dll"
+          if (-not (Test-Path $dllPath)) {
+            $dllPath = Join-Path $sln "AdderLib\$cfg\x64\AdderLib.dll"
+          }
+          if (-not (Test-Path $dllPath)) { Write-Error "AdderLib.dll not found at expected locations: $dllPath"; exit 1 }
+
+          $targets = @(
             Join-Path $sln "AdderApp\x64\$cfg",
             Join-Path $sln "AdderTests\x64\$cfg",
             Join-Path $sln "AdderBenchmarks\x64\$cfg"
           )
 
-          foreach ($dest in $consumers) {
-            if (-not (Test-Path $dest)) { New-Item -ItemType Directory -Force -Path $dest | Out-Null }
-            Copy-Item -Force $dllSrc $dest
-            Write-Host "Copied $dllSrc -> $dest"
+          foreach ($t in $targets) {
+            if (-not (Test-Path $t)) { New-Item -ItemType Directory -Force -Path $t | Out-Null }
+            Copy-Item -Force $dllPath $t
+            Write-Host "Copied $dllPath -> $t"
           }
+
 
       - name: Upload AdderLib artifacts
         uses: actions/upload-artifact@v4
