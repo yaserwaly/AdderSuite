@@ -25,13 +25,7 @@
 var NAVTREE =
 [
   [ "AdderSuite", "index.html", [
-    [ "AdderSuite Overview", "md_docs_2overview.html", [
-      [ "🧩 Architecture Layers", "md_docs_2overview.html#autotoc_md1", null ],
-      [ "🧪 Testing Strategy", "md_docs_2overview.html#autotoc_md2", null ],
-      [ "🚀 Benchmarking", "md_docs_2overview.html#autotoc_md3", null ],
-      [ "📊 Coverage", "md_docs_2overview.html#autotoc_md4", null ],
-      [ "📄 Documentation", "md_docs_2overview.html#autotoc_md5", null ]
-    ] ],
+    [ "AdderSuite Overview", "index.html", "index" ],
     [ "Classes", "annotated.html", [
       [ "Class List", "annotated.html", "annotated_dup" ],
       [ "Class Index", "classes.html", null ],
@@ -46,7 +40,8 @@ var NAVTREE =
       [ "File Members", "globals.html", [
         [ "All", "globals.html", null ],
         [ "Functions", "globals_func.html", null ],
-        [ "Enumerations", "globals_enum.html", null ]
+        [ "Enumerations", "globals_enum.html", null ],
+        [ "Macros", "globals_defs.html", null ]
       ] ]
     ] ]
   ] ]

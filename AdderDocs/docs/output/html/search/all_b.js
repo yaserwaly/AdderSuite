@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['_7eiadder_0',['~IAdder',['../class_i_adder.html#acb21dae7f45076863b8484b018478e73',1,'IAdder']]]
+  ['visual_20studio_0',['على Windows باستخدام Visual Studio',['../C:/Users/yaser/source/repos/AdderSuite/README.md#autotoc_md15',1,'']]]
 ];

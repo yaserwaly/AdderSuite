@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['📊_20coverage_0',['📊 Coverage',['../md_docs_2overview.html#autotoc_md4',1,'']]]
+  ['_7eiadder_0',['~IAdder',['../class_i_adder.html#acb21dae7f45076863b8484b018478e73',1,'IAdder']]]
 ];

@@ -1,4 +1,4 @@
-// AdderTests.cpp : This file contains the 'main' function. Program execution begins and ends there.
+﻿// AdderTests.cpp : This file contains the 'main' function. Program execution begins and ends there.
 //
 
 //#include <iostream>
@@ -7,13 +7,29 @@
 //{
 //    std::cout << "Hello World!\n";
 //}
+
 //or tests
+
 //#include <gtest/gtest.h>
 //
 //int main(int argc, char** argv) {
 //    ::testing::InitGoogleTest(&argc, argv);
 //    return RUN_ALL_TESTS();
 //}
+
+//or tests for pausing the screen after tests
+
+#include <gtest/gtest.h>
+#include <cstdlib>   // لـ system()
+
+int main(int argc, char** argv) {
+    ::testing::InitGoogleTest(&argc, argv);
+    int result = RUN_ALL_TESTS();   // خزّن النتيجة بدل ما ترجع مباشرة
+
+    system("pause");                // يوقف الشاشة وينتظر كبسة
+    return result;                  // رجّع نتيجة الاختبارات
+}
+
 
 
 // Run program: Ctrl + F5 or Debug > Start Without Debugging menu

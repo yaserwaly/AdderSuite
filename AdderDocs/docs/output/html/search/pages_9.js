@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['📊_20coverage_0',['📊 Coverage',['../md_docs_2overview.html#autotoc_md4',1,'']]]
+  ['windows_20باستخدام_20visual_20studio_0',['على Windows باستخدام Visual Studio',['../C:/Users/yaser/source/repos/AdderSuite/README.md#autotoc_md15',1,'']]]
 ];

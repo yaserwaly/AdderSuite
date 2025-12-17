@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['testing_20strategy_0',['🧪 Testing Strategy',['../md_docs_2overview.html#autotoc_md2',1,'']]]
+  ['testing_20strategy_0',['🧪 Testing Strategy',['../index.html#autotoc_md2',1,'']]]
 ];

@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['benchmarking_0',['🚀 Benchmarking',['../md_docs_2overview.html#autotoc_md3',1,'']]]
+  ['benchmarking_0',['🚀 Benchmarking',['../index.html#autotoc_md3',1,'']]]
 ];

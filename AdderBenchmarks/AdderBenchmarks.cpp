@@ -1,4 +1,4 @@
-// AdderBenchmarks.cpp : This file contains the 'main' function. Program execution begins and ends there.
+﻿// AdderBenchmarks.cpp : This file contains the 'main' function. Program execution begins and ends there.
 //
 
 //#include <iostream>
@@ -7,6 +7,25 @@
 //{
 //    std::cout << "Hello World!\n";
 //}
+
+//or benchmarks
+#include <benchmark/benchmark.h>
+
+// دالة main الخاصة بك
+int main(int argc, char** argv) {
+    // تهيئة Google Benchmark
+    ::benchmark::Initialize(&argc, argv);
+
+    // إذا ما في باراميترات، شغّل كل البنشماركات
+    if (::benchmark::ReportUnrecognizedArguments(argc, argv)) return 1;
+
+    // شغّل البنشماركات
+    ::benchmark::RunSpecifiedBenchmarks();
+
+    system("pause");  // يطبع رسالة "Press any key to continue . . ." وينتظر كبسة
+
+    return 0;
+}
 
 // Run program: Ctrl + F5 or Debug > Start Without Debugging menu
 // Debug program: F5 or Debug > Start Debugging menu

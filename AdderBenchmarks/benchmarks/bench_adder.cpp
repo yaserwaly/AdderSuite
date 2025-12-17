@@ -21,4 +21,4 @@ static void BM_AdderStub(benchmark::State& state) {
 }
 BENCHMARK(BM_AdderStub);
 
-BENCHMARK_MAIN();
+//BENCHMARK_MAIN();

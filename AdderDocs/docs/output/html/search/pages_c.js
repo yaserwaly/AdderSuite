@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['🧪_20testing_20strategy_0',['🧪 Testing Strategy',['../md_docs_2overview.html#autotoc_md2',1,'']]]
+  ['سطر_20الأوامر_0',['من سطر الأوامر',['../C:/Users/yaser/source/repos/AdderSuite/README.md#autotoc_md16',1,'']]]
 ];

@@ -7,6 +7,9 @@
   <Folder Name="/.github/workflows/">
     <File Path=".github/workflows/ci.yml" />
   </Folder>
+  <Project Path="AdderApp/AdderApp.vcxproj" Id="df57d1c3-8e24-44f4-8f05-d46b0ee60735">
+    <BuildDependency Project="AdderLib/AdderLib.vcxproj" />
+  </Project>
   <Project Path="AdderBenchmarks/AdderBenchmarks.vcxproj" Id="44cfb70e-a2c2-4a7c-a2c4-374a7bc55282" />
   <Project Path="AdderDocs/AdderDocs.vcxproj" />
   <Project Path="AdderLib/AdderLib.vcxproj" Id="dccc9177-ef66-483b-94d0-c21fff84cfba" />

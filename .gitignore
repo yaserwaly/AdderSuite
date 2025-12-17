@@ -364,3 +364,6 @@ FodyWeavers.xsd
 
 # Ignore old Doxygen config file
 AdderDocs/docs/DoxyfileOld
+
+#Ignore output Doxygen
+AdderDocs/docs/output
