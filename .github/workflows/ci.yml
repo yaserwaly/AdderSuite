@@ -382,10 +382,27 @@ jobs:
         run: |
           $cfg = "${{ matrix.config }}"
           $platform = "x64"
-          $projPath = Join-Path $env:GITHUB_WORKSPACE "AdderLib\AdderLib.vcxproj"
-          if (-not (Test-Path $projPath)) { Write-Error "AdderLib project not found: $projPath"; exit 1 }
-          & msbuild $projPath /p:Configuration=$cfg /p:Platform=$platform /m
-          if ($LASTEXITCODE -ne 0) { Write-Error "Build AdderLib failed"; exit $LASTEXITCODE }
+          $repo = $env:GITHUB_WORKSPACE
+          $projPath = Join-Path $repo "AdderLib\AdderLib.vcxproj"
+
+          if (-not (Test-Path $projPath)) {
+            Write-Error "AdderLib project not found: $projPath"
+            exit 1
+          }
+
+          # إذا كان ملف المشروع يحتوي على مسار include خاطئ، نمرّر مسار include الصحيح مؤقتًا
+          $includeDir = Join-Path $repo "AdderLib\include"
+          if (Test-Path $includeDir) {
+            & msbuild $projPath /p:Configuration=$cfg /p:Platform=$platform /p:AdditionalIncludeDirectories="$includeDir;%(AdditionalIncludeDirectories)" /m
+          } else {
+            # خلاف ذلك نبني المشروع بدون تعديل إضافي
+            & msbuild $projPath /p:Configuration=$cfg /p:Platform=$platform /m
+          }
+
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "Build AdderLib failed"
+            exit $LASTEXITCODE
+          }
 
 
 
@@ -393,36 +410,57 @@ jobs:
         shell: pwsh
         run: |
           $cfg = "${{ matrix.config }}"
-          $platform = "x64"
-          $sln = $env:GITHUB_WORKSPACE
+          $repo = $env:GITHUB_WORKSPACE
 
-          # عدّل المسارات أدناه لتطابق إخراج مشاريعك الفعلي
-          $dllPath = Join-Path $sln "AdderLib\x64\$cfg\AdderLib.dll"
-          if (-not (Test-Path $dllPath)) {
-            $dllPath = Join-Path $sln "AdderLib\$cfg\x64\AdderLib.dll"
+          # قائمة مسارات محتملة لإخراج الـ DLL (تغطّي اختلافات Release/Debug و x64 layout)
+          $candidates = @(
+            Join-Path $repo "AdderLib\x64\$cfg\AdderLib.dll",
+            Join-Path $repo "AdderLib\$cfg\x64\AdderLib.dll",
+            Join-Path $repo "AdderLib\bin\x64\$cfg\AdderLib.dll",
+            Join-Path $repo "AdderLib\$(Configuration)\x64\AdderLib.dll"
+          )
+
+          $dll = $null
+          foreach ($p in $candidates) {
+            if (Test-Path $p) { $dll = $p; break }
           }
-          if (-not (Test-Path $dllPath)) { Write-Error "AdderLib.dll not found at expected locations: $dllPath"; exit 1 }
+
+          if (-not $dll) {
+            # محاولة بحث عام كاحتياط
+            $found = Get-ChildItem -Path $repo -Recurse -Filter "AdderLib.dll" -ErrorAction SilentlyContinue | Select-Object -First 1
+            if ($found) { $dll = $found.FullName }
+          }
+
+          if (-not $dll) {
+            Write-Error "AdderLib.dll not found in expected locations. Candidates:`n$($candidates -join "`n")"
+            exit 1
+          }
+
+          Write-Host "Found AdderLib.dll at: $dll"
 
           $targets = @(
-            Join-Path $sln "AdderApp\x64\$cfg",
-            Join-Path $sln "AdderTests\x64\$cfg",
-            Join-Path $sln "AdderBenchmarks\x64\$cfg"
+            Join-Path $repo "AdderApp\x64\$cfg",
+            Join-Path $repo "AdderTests\x64\$cfg",
+            Join-Path $repo "AdderBenchmarks\x64\$cfg"
           )
 
           foreach ($t in $targets) {
             if (-not (Test-Path $t)) { New-Item -ItemType Directory -Force -Path $t | Out-Null }
-            Copy-Item -Force $dllPath $t
-            Write-Host "Copied $dllPath -> $t"
+            Copy-Item -Force $dll $t
+            Write-Host "Copied $dll -> $t"
           }
+
 
 
       - name: Upload AdderLib artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: AdderLib-${{ matrix.config }}-dll
+          name: AdderLib-${{ matrix.config }}-artifacts
           path: |
-            AdderLib\**\$(if (${{ matrix.config }} -eq 'Debug') { 'x64\\Debug\\AdderLib.dll' } else { 'x64\\Release\\AdderLib.dll' })
-            AdderLib\**\$(if (${{ matrix.config }} -eq 'Debug') { 'x64\\Debug\\AdderLib.lib' } else { 'x64\\Release\\AdderLib.lib' })
+            AdderLib/x64/${{ matrix.config }}/**
+            AdderLib/${{ matrix.config }}/x64/**
+            AdderLib/**/${{ matrix.config }}/x64/**
+
 
 
       - name: Build solution (x64 ${{ matrix.config }})
